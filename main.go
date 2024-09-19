@@ -138,16 +138,31 @@ func updateScore(db *sql.DB) {
     fmt.Println("Enter new SAT Score:")
     fmt.Scanln(&newScore)
 
-    passed := newScore > 30
+    // Recalculate the passed status based on the new score
+    passed := newScore > 1600*30/100
 
     query := `UPDATE SATResults SET Score = ?, Passed = ? WHERE Name = ?`
-    _, err := db.Exec(query, newScore, passed, name)
+    result, err := db.Exec(query, newScore, passed, name)
     if err != nil {
         log.Println("Error updating score:", err)
+        return
+    }
+
+    // Check how many rows were affected
+    rowsAffected, err := result.RowsAffected()
+    if err != nil {
+        log.Println("Error retrieving affected rows:", err)
+        return
+    }
+
+    // Inform the user whether the update was successful or not
+    if rowsAffected == 0 {
+        fmt.Printf("No record found with the name '%s'.\n", name)
     } else {
         fmt.Println("Score updated successfully")
     }
 }
+
 
 // Delete a record from the database
 func deleteRecord(db *sql.DB) {
@@ -156,13 +171,25 @@ func deleteRecord(db *sql.DB) {
     fmt.Scanln(&name)
 
     query := `DELETE FROM SATResults WHERE Name = ?`
-    _, err := db.Exec(query, name)
+    result, err := db.Exec(query, name)
     if err != nil {
         log.Println("Error deleting record:", err)
+        return
+    }
+
+    rowsAffected, err := result.RowsAffected()
+    if err != nil {
+        log.Println("Error retrieving affected rows:", err)
+        return
+    }
+
+    if rowsAffected == 0 {
+        fmt.Printf("No record found with the name '%s'.\n", name)
     } else {
         fmt.Println("Record deleted successfully")
     }
 }
+
 
 // Main function - Menu for operations
 func main() {
